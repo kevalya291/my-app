@@ -1,0 +1,35 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy files to EC2 via rsync
+        uses: easingthemes/ssh-deploy@v5.0.3
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.EC2_HOST }}
+          REMOTE_USER: ${{ secrets.EC2_USER }}
+          TARGET: /var/www/my-app
+          EXCLUDE: "/.git/, /.github/"
+
+      - name: Run post-deployment script
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /var/www/my-app
+            # Add service restart commands here if applicable, e.g.:
+            # npm install && pm2 restart app
+            echo "Deployment finished successfully."
